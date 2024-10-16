@@ -1,0 +1,54 @@
+{
+  "rules": {
+    //---- REGRAS GERAIS ----/
+    ".read": "auth.token.isAdmin == true || root.child('usuarios').child(auth.uid).child('funcao').val() === 'ADMIN'",
+    ".write": "auth.token.isAdmin == true",
+
+    //---- REGRAS PARA A ENTRADA 'alunos' ----//
+    "alunos": {
+      //---- INDEXAÇÃO DOS OBJETOS DENTRO DE 'alunos' ----//
+        ".indexOn": ["matricula","codCurso"],
+      //---- REGRAS DE QUEM PODE LER E ESCREVER --TODAS ENTRADAS-- DE 'alunos' ----//
+      ".read": "root.child('usuarios').child(auth.uid).child('funcao').val() === 'PROFESSOR'",
+      ".write": "root.child('usuarios').child(auth.uid).child('funcao').val() === 'ADMIN'",
+      //---- REGRAS DE QUEM PODE ESCREVER --UMA DETERMINADA ENTRADA-- DE 'alunos' CORRESPONDENTE A UM auth.uid ----//
+        "$uid": {
+        //---- QUAIS CAMPOS DEVEM ESTAR DENTRO DO OBJETO ----//
+        ".validate" : "newData.hasChildren(['matr', 'cpf','nome','telefone','siglaCurso'])",
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"  
+      }
+      },
+   
+        //---- REGRAS PARA A ENTRADA 'cursos' ----//      
+    "cursos": {
+      //---- INDEXAÇÃO DOS OBJETOS DENTRO DE 'cursos' ----//
+        ".indexOn": ["sigla"],
+      //---- REGRAS DE QUEM PODE LER E ESCREVER --TODAS ENTRADAS-- DE 'cursos' ----//
+      ".read": "root.child('usuarios').child(auth.uid).child('funcao').val() === 'PROFESSOR' ||
+                root.child('usuarios').child(auth.uid).child('funcao').val() === 'ALUNO'",
+      ".write": "root.child('usuarios').child(auth.uid).child('funcao').val() === 'ADMIN'",
+      //---- REGRAS DE VALIDACAO --UMA DETERMINADA ENTRADA-- DE 'cursos' ----//
+      "$sigla" : {
+          ".validate" : "newData.hasChildren(['sigla','nome','numCreditos']) && newData.child('sigla').val() === $sigla"
+      }
+      },
+
+        //---- REGRAS PARA A ENTRADA 'usuarios' ----//      
+    "usuarios": {
+      //---- INDEXAÇÃO DOS OBJETOS DENTRO DE 'usuarios' ----//
+      ".read": "root.child('usuarios').child(auth.uid).child('funcao').val() === 'ADMIN'",
+      ".write": "root.child('usuarios').child(auth.uid).child('funcao').val() === 'ADMIN'",
+      //---- REGRAS DE QUEM PODE ESCREVER --UMA DETERMINADA ENTRADA-- DE 'usuarios' CORRESPONDENTE A UM auth.uid ----//        
+        "$uid": {
+          ".validate" : "newData.hasChildren(['uid','email','funcao'])",
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid && newData.child('funcao').val() == 'INABILITADO'",        
+                //---- REGRAS DE VALIDAÇÃO DO CAMPO 'funcao': QUAIS VALORES SÃO PERMITIDOS DE FORMA GERAL  ----//                
+                "funcao" : {
+          ".validate" : "newData.val() == 'ADMIN' || newData.val() == 'PROFESSOR' || newData.val() == 'ALUNO' || newData.val() == 'INABILITADO'"
+        }
+      }
+      }
+  }
+}
